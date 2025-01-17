@@ -1,0 +1,75 @@
+services:
+  app:
+    image: php:8.2-fpm
+    container_name: php_app
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - seo-network
+    depends_on:
+      - db
+    command: >
+      sh -c "docker-php-ext-install pdo_mysql && php-fpm"
+
+  web:
+    image: nginx:alpine
+    container_name: seo-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - seo-network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: seo-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: your_password
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: laravel_password
+    networks:
+      - seo-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: seo-phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db  # Name of the database container
+      PMA_USER: laravel_user  # MySQL root username
+      PMA_PASSWORD: laravel_password  # MySQL root password
+      PMA_ARBITRARY: 1
+      APACHE_SERVER_NAME: phpmyadmin.local
+    depends_on:
+      - db
+    networks:
+      - seo-network
+
+  python:
+    image: python:3.9-slim
+    container_name: python_service
+    working_dir: /app
+    volumes:
+      - ./ai:/app
+    command: >
+      sh -c "
+      pip install --no-cache-dir -r requirements.txt &&
+      python app.py
+      "
+    ports:
+      - "5000:5000"
+
+volumes:
+  db-data:
+
+networks:
+  seo-network:
+    driver: bridge
