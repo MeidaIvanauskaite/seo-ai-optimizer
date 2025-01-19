@@ -35,4 +35,7 @@ return [
         ],
     ],
 
+    'google' => [
+        'service_account_file' => env('SERVICE_ACCOUNT_FILE'),
+    ],
 ];
