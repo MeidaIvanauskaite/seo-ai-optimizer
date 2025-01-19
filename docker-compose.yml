@@ -10,7 +10,12 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "docker-php-ext-install pdo_mysql && php-fpm"
+      sh -c "
+      docker-php-ext-install pdo_mysql &&
+      php-fpm &&
+      chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache &&
+      chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+      "
 
   web:
     image: nginx:alpine
@@ -59,6 +64,7 @@ services:
     working_dir: /app
     volumes:
       - ./ai:/app
+      - ./storage/credentials/google_credentials.json:/app/google_credentials.json
     command: >
       sh -c "
       pip install --no-cache-dir -r requirements.txt &&
@@ -66,6 +72,16 @@ services:
       "
     ports:
       - "5000:5000"
+
+  node:
+    image: node:18
+    container_name: seo-node
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    networks:
+      - seo-network
+    command: tail -f /dev/null
 
 volumes:
   db-data:
