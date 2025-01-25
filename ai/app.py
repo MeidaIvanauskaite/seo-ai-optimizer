@@ -4,10 +4,6 @@ from google.oauth2 import service_account
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Flask is running!"
-
 # Path to your Google service account credentials
 SERVICE_ACCOUNT_FILE = '/app/google_credentials.json'
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
@@ -32,7 +28,3 @@ def get_analytics_data():
 # Ensure the app runs when the container starts
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-
-
-# print("Analytics Service:", analytics_service)
-# print("Webmasters Service:", webmasters_service)
