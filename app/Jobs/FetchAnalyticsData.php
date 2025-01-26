@@ -10,32 +10,51 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
-class FetchAnalyticsData implements ShouldQueue
-{
+class FetchAnalyticsData implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function handle()
-    {
-        // Your logic to fetch data from Google Analytics API
+    public function handle() {
         Log::info('FetchAnalyticsData job started.');
 
-        // Simulating analytics data fetching logic
-        $client = new Client();
+        $client = new \Google\Client();
         $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
+        $client->addScope(\Google\Service\Analytics::ANALYTICS_READONLY);
+        $analytics = new \Google\Service\Analytics($client);
 
-        $analytics = new Analytics($client);
-        $accounts = $analytics->management_accounts->listManagementAccounts();
+        try {
+            $accounts = $analytics->management_accounts->listManagementAccounts();
+            $accountData = [];
+            foreach ($accounts->getItems() as $account) {
+                $accountData[] = [
+                    'id' => $account->getId(),
+                    'name' => $account->getName(),
+                    'created' => $account->getCreated(),
+                    'permissions' => $account->getPermissions(),
+                    'childLink' => $account->getChildLink(),
+                ];
+            }
 
-        Log::info('Analytics Data Fetched:', $accounts);
+            Log::info('Fetched Data:', $accountData);
+            Cache::put('google_analytics_accounts', $accountData, now()->addMinutes(30));
+            Log::info('Data cached successfully');
+        } catch (\Exception $e) {
+            Log::error('Error fetching Analytics Data: ' . $e->getMessage());
+        }
     }
+
+    //docker exec -it php_app php artisan queue:work
+    //docker exec -it php_app tail -f storage/logs/laravel.log
+    //docker exec -it php_app php artisan tinker
+    //Cache::get('google_analytics_accounts');
 
     private function fetchAnalyticsData()
     {
         // Load Google Client
         $client = new Client();
         $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
-        $client->addScope(Analytics::ANALYTICS_READONLY);
+        $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
 
         // Instantiate the Analytics service
         $analytics = new Analytics($client);

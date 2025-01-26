@@ -15,6 +15,7 @@ services:
       pecl install redis &&
       docker-php-ext-enable redis &&
       php artisan migrate --force &&
+      php artisan db:seed --class=UserSeeder &&
       php-fpm &&
       while true; do php artisan schedule:run; sleep 60; done
       "
@@ -66,7 +67,7 @@ services:
     working_dir: /app
     volumes:
       - ./ai:/app
-      - ./storage/credentials/google_credentials.json:/app/google_credentials.json
+      - ./path/to/new/google_credentials.json:/var/www/html/storage/credentials/google_credentials.json
     command: >
       sh -c "
       pip install --no-cache-dir -r requirements.txt &&

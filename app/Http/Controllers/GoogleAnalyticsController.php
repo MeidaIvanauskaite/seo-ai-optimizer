@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Http;
+use Google\Client;
+use Google\Service\GoogleAnalyticsAdmin;
 
 class GoogleAnalyticsController extends Controller
 {
@@ -40,5 +42,57 @@ class GoogleAnalyticsController extends Controller
                 'bounceRate' => 15,  // Replace with real data from the API
             ],
         ]);
+    }
+
+    public function fetchWebProperties($accountId) {
+        $client = new Client();
+        $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
+        $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
+        $adminService = new GoogleAnalyticsAdmin($client);
+
+        try {
+            $properties = $adminService->properties->listProperties([
+                'filter' => 'parent:accounts/' . $accountId
+            ]);
+
+            return response()->json($properties->toSimpleObject());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function fetchAccountsWithProperties()
+    {
+        $client = new Client();
+        $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
+        $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
+
+        $adminService = new GoogleAnalyticsAdmin($client);
+
+        try {
+            // Fetch Accounts
+            $accounts = $adminService->accounts->listAccounts();
+            $accountsWithProperties = [];
+
+            // Fetch Properties for Each Account
+            foreach ($accounts->getAccounts() as $account) {
+                $properties = $adminService->properties->listProperties([
+                    'filter' => 'parent:' . $account->getName(),
+                ]);
+
+                $accountsWithProperties[] = [
+                    'account' => [
+                        'id' => $account->getName(),
+                        'name' => $account->getDisplayName(),
+                    ],
+                    'properties' => $properties->getProperties(),
+                ];
+            }
+
+            // Pass the data to the Blade template
+            return view('google', ['accounts' => $accountsWithProperties]);
+        } catch (\Exception $e) {
+            return view('google', ['accounts' => [], 'error' => $e->getMessage()]);
+        }
     }
 }

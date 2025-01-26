@@ -14,7 +14,7 @@ class GoogleController extends Controller
     {
         $this->client = new Google_Client();
         $this->client->setAuthConfig(storage_path('credentials/google_credentials.json'));
-        $this->client->addScope(Analytics::ANALYTICS_READONLY);
+        $this->client->addScope('https://www.googleapis.com/auth/analytics.readonly');
         $this->client->setAccessType('offline');
     }
 

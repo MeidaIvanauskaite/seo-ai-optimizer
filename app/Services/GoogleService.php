@@ -13,7 +13,7 @@ class GoogleService
     {
         $this->client = new Client();
         $this->client->setAuthConfig(config('services.google.service_account_file'));
-        $this->client->addScope(Analytics::ANALYTICS_READONLY);
+        $this->client->addScope('https://www.googleapis.com/auth/analytics.readonly');
     }
 
     public function getAnalyticsAccounts()

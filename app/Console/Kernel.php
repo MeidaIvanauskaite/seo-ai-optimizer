@@ -4,16 +4,16 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\FetchAnalyticsData;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 
 class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->job(new FetchAnalyticsData())->everyMinute();
+        // Clear cache every minute (for testing)
         $schedule->call(function () {
-            Log::info('Scheduler is running');
+            Artisan::call('cache:clear');
+            \App\Jobs\FetchAnalyticsData::dispatch();
         })->everyMinute();
     }
 

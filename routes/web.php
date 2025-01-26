@@ -4,12 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Services\GoogleService;
 use App\Http\Controllers\GoogleAnalyticsController;
 use App\Jobs\FetchAnalyticsData;
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/google-accounts', function (GoogleService $googleService) {
     try {
@@ -20,9 +15,13 @@ Route::get('/google-accounts', function (GoogleService $googleService) {
     }
 });
 
-Route::get('/google', [GoogleAnalyticsController::class, 'index']);
+Route::get('/google-accounts/{accountId}', [GoogleAnalyticsController::class, 'fetchWebProperties']);
+
+Route::get('/google', [GoogleAnalyticsController::class, 'fetchAccountsWithProperties']);
 
 Route::get('/trigger-job', function () {
     FetchAnalyticsData::dispatch();
     return response()->json(['message' => 'Job dispatched!']);
 });
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
